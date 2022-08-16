@@ -46,8 +46,12 @@ String message;
 bool checkMessage()
 {
     if (Serial.available())
-    {
+    {  
         message = Serial.readStringUntil('\n');
+        message.toUpperCase();
+        if (!message.endsWith(" ")) {
+            message += " ";
+        }
         return true;
     }
     return false;

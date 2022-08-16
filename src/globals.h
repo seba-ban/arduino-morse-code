@@ -1,5 +1,4 @@
 #pragma once
-#define CHARS_SUPPORTED 36
 #define UNIT 100
 #define SHORT UNIT
 #define LONG UNIT * 3

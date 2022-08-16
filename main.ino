@@ -4,7 +4,7 @@
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     initializeMorseCodes();
     initializeLcd();
@@ -22,5 +22,5 @@ void loop()
     // lcd.clear();
     // lcd.setCursor(0, 0);
     // lcd.print(duration);
-    // morseCodeWriteLoop();
+    morseCodeWriteLoop();
 }

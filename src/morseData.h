@@ -3,6 +3,7 @@
 #include "lcd.h"
 #define _MORSE_SIGNAL(X) 0b1##X
 #define _CHARS_SUPPORTED 36
+#define _BIN_TREE_LEN (1 << 6) - 1
 #define _SIGNAL_MASK 0b10000000
 #define _MAX_SIGNAL_SHIFTS 7
 #define _LOOP_SIGNAL(signal)                                            \
@@ -19,9 +20,6 @@
         signal = signal << 1;                                           \
         currentSignal = (signal & _SIGNAL_MASK) == 0 ? _MORSE_SHORT : _MORSE_LONG;
 #define _LOOP_SIGNAL_END }
-#define _REGISTER_SIGNAL(CHAR, BITS)               \
-    signals[getIndex(CHAR)] = _MORSE_SIGNAL(BITS); \
-    addChar(trieRoot, CHAR, _MORSE_SIGNAL(BITS));
 
 typedef enum
 {
@@ -29,109 +27,59 @@ typedef enum
     _MORSE_LONG
 } _MorseSignal;
 
-// ========== TRIE STRUCTURE ================
-// supposed to be used when analyzing incoming
-// signals
+// ========== BNARY TREE STRUCTURE ===========
+// supposed to be used when analyzing
+// incoming signals
 
-typedef struct TrieNode
-{
-    char letter;
-    struct TrieNode *nextShort;
-    struct TrieNode *nextLong;
-} TrieNode;
+char binaryTree[(1 << 6) - 1] = {0};
 
-TrieNode *createNode()
+int getNextBinaryIndex(int lastIndex, _MorseSignal signal)
 {
-    TrieNode *node = (TrieNode *)malloc(sizeof(TrieNode));
-    node->letter = 0;
-    node->nextLong = NULL;
-    node->nextShort = NULL;
-    return node;
+    int i = 2 * lastIndex + (signal == _MORSE_SHORT ? 1 : 2);
+    if (i >= _BIN_TREE_LEN) {
+        return -1;
+    }
+    return i;
 }
 
-// when to call it on arduino? :O
-void clearTrie(TrieNode *node)
+void addCharBinary(char letter, unsigned char signal)
 {
-    if (node->nextLong != NULL)
-    {
-        clearTrie(node->nextLong);
-    }
-    if (node->nextShort != NULL)
-    {
-        clearTrie(node->nextShort);
-    }
-    free(node);
-}
-
-// helper that extracts the next trie node
-// and creates it if necessary
-TrieNode *getNext(TrieNode *node, _MorseSignal signal)
-{
-    if (signal == _MORSE_SHORT)
-    {
-        if (node->nextShort == NULL)
-        {
-            node->nextShort = createNode();
-        }
-        return node->nextShort;
-    }
-    else
-    {
-        if (node->nextLong == NULL)
-        {
-            node->nextLong = createNode();
-        }
-        return node->nextLong;
-    }
-}
-
-// adds letter to the trie
-void addChar(TrieNode *node, char letter, unsigned char signal)
-{
-    TrieNode *next = node;
+    int i = 0;
     _LOOP_SIGNAL(signal)
-    next = getNext(next, currentSignal);
+    i = getNextBinaryIndex(i, currentSignal);
     _LOOP_SIGNAL_END
-    next->letter = letter;
+    binaryTree[i] = letter;
 }
 
 // note this works on signals with the additional bit
-char analyzeSignal(TrieNode *node, char signal)
+char analyzeSignalBinary(char signal)
 {
-    TrieNode *next = node;
+    int i = 0;
     _LOOP_SIGNAL(signal)
-    if (currentSignal == _MORSE_SHORT)
-    {
-        next = next->nextShort;
-    }
-    else
-    {
-        next = next->nextLong;
-    }
-    if (next == NULL)
+    i = getNextBinaryIndex(i, currentSignal);
+    if (i == -1)
     {
         return 0;
     }
     _LOOP_SIGNAL_END
-    return next->letter;
+    return binaryTree[i];
 }
 
-TrieNode *trieRoot;
+// ========== ARRAY OF SIGNALS ================
+// to be used when convertng chars to morse
 
-// ========== ARRAY OF SIGNALS (FOR WRITING) ================
-
-// 10 - numbers
-// 26 - capital letters
+// 0-9 - numbers
+// 10-35 - capital letters
 unsigned char signals[_CHARS_SUPPORTED] = {};
 
 int getIndex(char c)
 {
     int initialAscii;
 
-    // 0 48
-    // 9 57
-    // A 65
-    // Z 90
+    // 0 - 48
+    // 9 - 57
+    // A - 65
+    // Z - 90
     if (c < 48)
     { // not a number
         return -1;
@@ -153,7 +101,7 @@ int getIndex(char c)
         return -1;
     };
 
-    return (c - initialAscii) % CHARS_SUPPORTED;
+    return (c - initialAscii) % _CHARS_SUPPORTED;
 }
 
 // ========= INITIALIZATION ==============
@@ -161,23 +109,21 @@ int getIndex(char c)
 void registerSignal(char letter, unsigned char bits)
 {
     signals[getIndex(letter)] = bits;
-    addChar(trieRoot, letter, bits);
+    addCharBinary(letter, bits);
 }
 
 void initializeMorseCodes()
 {
-    trieRoot = createNode();
-
-    // registerSignal('0', _MORSE_SIGNAL(0));
-    // registerSignal('1', _MORSE_SIGNAL(0));
-    // registerSignal('2', _MORSE_SIGNAL(0));
-    // registerSignal('3', _MORSE_SIGNAL(0));
-    // registerSignal('4', _MORSE_SIGNAL(0));
-    // registerSignal('5', _MORSE_SIGNAL(0));
-    // registerSignal('6', _MORSE_SIGNAL(0));
-    // registerSignal('7', _MORSE_SIGNAL(0));
-    // registerSignal('8', _MORSE_SIGNAL(0));
-    // registerSignal('9', _MORSE_SIGNAL(0));
+    registerSignal('0', _MORSE_SIGNAL(11111));
+    registerSignal('1', _MORSE_SIGNAL(01111));
+    registerSignal('2', _MORSE_SIGNAL(00111));
+    registerSignal('3', _MORSE_SIGNAL(00011));
+    registerSignal('4', _MORSE_SIGNAL(00001));
+    registerSignal('5', _MORSE_SIGNAL(00000));
+    registerSignal('6', _MORSE_SIGNAL(10000));
+    registerSignal('7', _MORSE_SIGNAL(11000));
+    registerSignal('8', _MORSE_SIGNAL(11100));
+    registerSignal('9', _MORSE_SIGNAL(11110));
 
     registerSignal('A', _MORSE_SIGNAL(01));
     registerSignal('B', _MORSE_SIGNAL(1000));

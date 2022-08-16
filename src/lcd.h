@@ -32,7 +32,6 @@ void writeLetterToLCD(char c)
 char bufBottom[16] = {};
 void writeSignalToLCD(char c)
 {
-    return;
     shiftArrayLeft(bufBottom);
     bufBottom[15] = c;
     lcd.setCursor(0, 1);
