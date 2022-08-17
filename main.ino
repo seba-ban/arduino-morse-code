@@ -5,22 +5,15 @@
 void setup()
 {
     Serial.begin(115200);
-
     initializeMorseCodes();
     initializeLcd();
-    // initialize buzzer
-    pinMode(BUTTON, INPUT);
+    pinMode(BUTTON, INPUT_PULLUP);
     pinMode(BUZZER, OUTPUT);
     digitalWrite(BUZZER, LOW);
 }
 
 void loop()
 {
-    // unsigned long duration;
-    // duration = pulseIn(BUTTON, HIGH);
-    // // Serial.println(duration);
-    // lcd.clear();
-    // lcd.setCursor(0, 0);
-    // lcd.print(duration);
-    morseCodeWriteLoop();
+    // morseCodeWriteLoop();
+    morseCodeReadLoop();
 }

@@ -31,7 +31,7 @@ typedef enum
 // supposed to be used when analyzing
 // incoming signals
 
-char binaryTree[(1 << 6) - 1] = {0};
+char binaryTree[_BIN_TREE_LEN] = {};
 
 int getNextBinaryIndex(int lastIndex, _MorseSignal signal)
 {
@@ -114,6 +114,10 @@ void registerSignal(char letter, unsigned char bits)
 
 void initializeMorseCodes()
 {
+    for (int i = 0; i < _BIN_TREE_LEN; i++) {
+        binaryTree[i] = 0;
+    }
+
     registerSignal('0', _MORSE_SIGNAL(11111));
     registerSignal('1', _MORSE_SIGNAL(01111));
     registerSignal('2', _MORSE_SIGNAL(00111));
