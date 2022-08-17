@@ -46,10 +46,11 @@ String message;
 bool checkMessage()
 {
     if (Serial.available())
-    {  
+    {
         message = Serial.readStringUntil('\n');
         message.toUpperCase();
-        if (!message.endsWith(" ")) {
+        if (!message.endsWith(" "))
+        {
             message += " ";
         }
         return true;
@@ -135,6 +136,8 @@ void morseCodeReadLoop()
             {
                 currentPhase = IDLE;
                 writeLetterToLCD('?');
+                writeSignalToLCD(' ');
+                writeSignalToLCD('?');
                 currentInput = 1;
                 break;
             }
@@ -143,6 +146,8 @@ void morseCodeReadLoop()
             {
                 currentPhase = IDLE;
                 writeLetterToLCD('?');
+                writeSignalToLCD(' ');
+                writeSignalToLCD('?');
                 currentInput = 1;
                 break;
             }
@@ -193,4 +198,3 @@ void morseCodeReadLoop()
     }
     delay(25);
 }
-
